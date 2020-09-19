@@ -1,7 +1,7 @@
 const Builder = @import("std").build.Builder;
 const builtin = @import("builtin");
 
-pub fn build(b: *Builder) void {
+pub fn main(b: *Builder) void {
     const mode = b.standardReleaseOptions();
 
     const exe = b.addExecutable("firmware.elf", "startup.zig");
