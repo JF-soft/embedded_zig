@@ -4,9 +4,10 @@ const mem = @import("std").mem;
 // user program function declared in main.zig
 extern fn main() void;
 
-// main stack pointer, cast it to fn () void to populate 
+// main stack pointer, cast it to fn () void to populate
 // vector table and be  able to use a standard linker script
 // Thanks to shima-529 stm32OnDlang (STM32 D lang project)
+// https://github.com/shima-529/stm32OnDlang
 extern fn _estack() void;
 
 // start of initialized data in flash, from linker script
@@ -71,15 +72,8 @@ extern fn DebugMon_Handler() void;
 extern fn PendSV_Handler() void;
 extern fn SysTick_Handler() void;
 
-// Interrupts
-const stack_ptr: u32 = 0x20005000;
-
-// isr vector typedef
-const isr = extern fn () void;
-// const stack = @ptrCast(isr, &_estack);
-
-// JF TODO: find a way to insert stack pointer as first item
-export const vector_table linksection(".isr_vector") = [_]?isr{
+// Exception and Interrupt vectors
+export const vector_table linksection(".isr_vector") = [_]?extern fn () void{
     _estack,
     Reset_Handler,
     NMI_Handler,
