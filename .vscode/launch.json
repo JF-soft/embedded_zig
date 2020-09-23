@@ -10,7 +10,9 @@
             "executable": "./firmware.elf",
             "request": "launch",
             "type": "cortex-debug",
-            "servertype": "openocd"
+            "servertype": "external",
+            "gdbTarget": "192.168.7.2:3333",
+            "svdFile": "./STM32F103xx.svd",
         }
     ]
 }
