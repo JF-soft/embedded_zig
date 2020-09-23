@@ -5,10 +5,19 @@ const VECT_TAB_OFFSET = 0x0;
 const PERIPH_BASE = 0x40000000;
 const APB2PERIPH_BASE = PERIPH_BASE + 0x10000;
 const AHBPERIPH_BASE = PERIPH_BASE + 0x20000;
+
+const GPIOB_BASE = APB2PERIPH_BASE + 0x0C00;
 const GPIOC_BASE = APB2PERIPH_BASE + 0x1000;
+
+
 const RCC_BASE = AHBPERIPH_BASE + 0x1000;
+
+pub const GPIO_PIN_12: u32 = (1 << 12);
+pub const RCC_APB2Periph_GPIOB: u32 = 0x00000008;
+
 pub const GPIO_PIN_13: u32 = 0x2000;
 pub const RCC_APB2Periph_GPIOC: u32 = 0x00000010;
+
 const RCC_CR_HSEON: u32 = 0x00010000;
 const RCC_CR_HSERDY: u32 = 0x00020000;
 const HSE_STARTUP_TIMEOUT: u16 = 0x0500;
@@ -66,7 +75,9 @@ const FLASH_t = packed struct {
     WRPR: u32,
 };
 
+pub const GPIOB = @intToPtr(*volatile GPIO_t, GPIOB_BASE);
 pub const GPIOC = @intToPtr(*volatile GPIO_t, GPIOC_BASE);
+
 pub const RCC = @intToPtr(*volatile RCC_t, RCC_BASE);
 pub const FLASH = @intToPtr(*volatile FLASH_t, FLASH_R_BASE);
 
@@ -74,22 +85,22 @@ pub const FLASH = @intToPtr(*volatile FLASH_t, FLASH_R_BASE);
 pub fn SystemInit() void {
     //* Reset the RCC clock configuration to the default reset state(for debug purpose) */
     //* Set HSION bit */
-    RCC.*.CR |= @intCast(u32, 0x00000001);
+    RCC.*.CR |= @as(u32, 0x00000001);
 
     //* Reset SW, HPRE, PPRE1, PPRE2, ADCPRE and MCO bits */
-    RCC.*.CFGR &= @intCast(u32, 0xF8FF0000);
+    RCC.*.CFGR &= @as(u32, 0xF8FF0000);
 
     //* Reset HSEON, CSSON and PLLON bits */
-    RCC.*.CR &= @intCast(u32, 0xFEF6FFFF);
+    RCC.*.CR &= @as(u32, 0xFEF6FFFF);
 
     //* Reset HSEBYP bit */
-    RCC.*.CR &= @intCast(u32, 0xFFFBFFFF);
+    RCC.*.CR &= @as(u32, 0xFFFBFFFF);
 
     //* Reset PLLSRC, PLLXTPRE, PLLMUL and USBPRE/OTGFSPRE bits */
-    RCC.*.CFGR &= @intCast(u32, 0xFF80FFFF);
+    RCC.*.CFGR &= @as(u32, 0xFF80FFFF);
 
     //* Disable all interrupts and clear pending bits  */
-    RCC.*.CIR =  @intCast(u32, 0x009F0000);
+    RCC.*.CIR =  @as(u32, 0x009F0000);
 
     //* Configure the System clock frequency, HCLK, PCLK2 and PCLK1 prescalers */
     //* Configure the Flash Latency cycles and enable prefetch buffer */
@@ -105,7 +116,7 @@ fn SetSysClock() void {
 
     //* SYSCLK, HCLK, PCLK2 and PCLK1 configuration ---------------------------*/
     //* Enable HSE */
-    RCC.*.CR |= @intCast(u32, RCC_CR_HSEON);
+    RCC.*.CR |= @as(u32, RCC_CR_HSEON);
 
     //* Wait till HSE is ready and if Time out is reached exit */
     HSEStatus = RCC.*.CR & RCC_CR_HSERDY;
@@ -126,21 +137,21 @@ fn SetSysClock() void {
         FLASH.*.ACR |= FLASH_ACR_PRFTBE;
 
         //* Flash 2 wait state */
-        FLASH.*.ACR &= @intCast(u32, ~FLASH_ACR_LATENCY);
-        FLASH.*.ACR |= @intCast(u32, FLASH_ACR_LATENCY_2);
+        FLASH.*.ACR &= @as(u32, ~FLASH_ACR_LATENCY);
+        FLASH.*.ACR |= @as(u32, FLASH_ACR_LATENCY_2);
 
         //* HCLK = SYSCLK */
-        RCC.*.CFGR |= @intCast(u32, RCC_CFGR_HPRE_DIV1);
+        RCC.*.CFGR |= @as(u32, RCC_CFGR_HPRE_DIV1);
 
         //* PCLK2 = HCLK */
-        RCC.*.CFGR |= @intCast(u32, RCC_CFGR_PPRE2_DIV1);
+        RCC.*.CFGR |= @as(u32, RCC_CFGR_PPRE2_DIV1);
 
         //* PCLK1 = HCLK */
-        RCC.*.CFGR |= @intCast(u32, RCC_CFGR_PPRE1_DIV2);
+        RCC.*.CFGR |= @as(u32, RCC_CFGR_PPRE1_DIV2);
 
         //*  PLL configuration: PLLCLK = HSE * 9 = 72 MHz */
-        RCC.*.CFGR &= @intCast(u32, ~@intCast(u32, RCC_CFGR_PLLSRC | RCC_CFGR_PLLXTPRE | RCC_CFGR_PLLMULL));
-        RCC.*.CFGR |= @intCast(u32, RCC_CFGR_PLLSRC_HSE | RCC_CFGR_PLLMULL9);
+        RCC.*.CFGR &= @as(u32, ~@as(u32, RCC_CFGR_PLLSRC | RCC_CFGR_PLLXTPRE | RCC_CFGR_PLLMULL));
+        RCC.*.CFGR |= @as(u32, RCC_CFGR_PLLSRC_HSE | RCC_CFGR_PLLMULL9);
 
         //* Enable PLL */
         RCC.*.CR |= RCC_CR_PLLON;
@@ -149,11 +160,11 @@ fn SetSysClock() void {
         while ((RCC.*.CR & RCC_CR_PLLRDY) == 0) {}
 
         //* Select PLL as system clock source */
-        RCC.*.CFGR &= @intCast(u32, ~@intCast(u32, RCC_CFGR_SW));
-        RCC.*.CFGR |= @intCast(u32, RCC_CFGR_SW_PLL);
+        RCC.*.CFGR &= @as(u32, ~@as(u32, RCC_CFGR_SW));
+        RCC.*.CFGR |= @as(u32, RCC_CFGR_SW_PLL);
 
         //* Wait till PLL is used as system clock source */
-        while ((RCC.*.CFGR & @intCast(u32, RCC_CFGR_SWS)) != @intCast(u32, 0x08)) {}
+        while ((RCC.*.CFGR & @as(u32, RCC_CFGR_SWS)) != @as(u32, 0x08)) {}
     } else { //* If HSE fails to start-up, the application will have wrong clock
         //  configuration. User can add here some code to deal with this error */
     }

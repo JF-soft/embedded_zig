@@ -4,13 +4,13 @@ export fn main() void {
     // initialize System
     SystemInit();
 
-    RCC.*.APB2ENR |= RCC_APB2Periph_GPIOC; // enable GPIOC clk
+    RCC.*.APB2ENR |= RCC_APB2Periph_GPIOB; // enable GPIOC clk
 
-    GPIOC.*.CRH &= ~@intCast(u32, 0b1111 << 20); // PC13
-    GPIOC.*.CRH |= @intCast(u32, 0b0010 << 20); // Out PP, 2MHz
+    GPIOB.*.CRH &= ~@as(u32, 0b1111 << 16); // PB12
+    GPIOB.*.CRH |= @as(u32, 0b0010 << 16); // Out PP, 2MHz
 
     while (true) {
-        GPIOC.*.ODR ^= GPIO_PIN_13; // toggle
+        GPIOB.*.ODR ^= GPIO_PIN_12; // toggle
         var i: u32 = 0;
         while (i < 1000000) {
             asm volatile ("nop");
