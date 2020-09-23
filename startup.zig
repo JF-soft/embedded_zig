@@ -62,15 +62,51 @@ export fn Dummy_Handler() void {
 }
 
 // Exceptions
-extern fn NMI_Handler() void;
-extern fn HardFault_Handler() void;
-extern fn MemManage_Handler() void;
-extern fn BusFault_Handler() void;
-extern fn UsageFault_Handler() void;
-extern fn SVC_Handler() void;
-extern fn DebugMon_Handler() void;
-extern fn PendSV_Handler() void;
-extern fn SysTick_Handler() void;
+comptime {
+    @export(BusyDummy_Handler, .{ .name = "NMI_Handler", .linkage = .Weak });
+}
+fn NMI_Handler() callconv(.C) void {}
+
+comptime {
+    @export(BusyDummy_Handler, .{ .name = "HardFault_Handler", .linkage = .Weak });
+}
+fn HardFault_Handler() callconv(.C) void {}
+
+comptime {
+    @export(BusyDummy_Handler, .{ .name = "MemManage_Handler", .linkage = .Weak });
+}
+fn MemManage_Handler() callconv(.C) void {}
+
+comptime {
+    @export(BusyDummy_Handler, .{ .name = "BusFault_Handler", .linkage = .Weak });
+}
+fn BusFault_Handler() callconv(.C) void {}
+
+comptime {
+    @export(BusyDummy_Handler, .{ .name = "UsageFault_Handler", .linkage = .Weak });
+}
+fn UsageFault_Handler() callconv(.C) void {}
+
+comptime {
+    @export(Dummy_Handler, .{ .name = "SVC_Handler", .linkage = .Weak });
+}
+fn SVC_Handler() callconv(.C) void {}
+
+comptime {
+    @export(Dummy_Handler, .{ .name = "DebugMon_Handler", .linkage = .Weak });
+}
+fn DebugMon_Handler() callconv(.C) void {}
+
+comptime {
+    @export(Dummy_Handler, .{ .name = "PendSV_Handler", .linkage = .Weak });
+}
+fn PendSV_Handler() callconv(.C) void {}
+
+// extern fn SysTick_Handler() void;
+comptime {
+    @export(Dummy_Handler, .{ .name = "SysTick_Handler", .linkage = .Weak });
+}
+fn SysTick_Handler() callconv(.C) void {}
 
 // Exception and Interrupt vectors
 export const vector_table linksection(".isr_vector") = [_]?extern fn () void{

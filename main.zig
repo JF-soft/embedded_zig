@@ -1,5 +1,11 @@
 usingnamespace @import("stm32f10.zig");
 
+var tick: i32 = 0;
+
+export fn Systick_Hander() void {
+    tick = tick + 1;
+}
+
 export fn main() void {
     // initialize System
     SystemInit();
