@@ -13,16 +13,14 @@
 **
 **  Target      : STMicroelectronics STM32
 **
-**  Environment : Embedded Zig programs using LLVM
+**  Environment : Embedded Zig programs using LLD linker
 **
 **  Distribution: The file is distributed "as is", without any warranty
 **                of any kind.
 **
 **  (c) Jonatan R. Fischer.
 **  You may use this file as-is or modify it according to the needs of your
-**  project. This file may only be built (assembled or compiled and linked)
-**  using the Atollic TrueSTUDIO(R) product. The use of this file together
-**  with other tools than Atollic TrueSTUDIO(R) is not permitted.
+**  project. 
 **
 *****************************************************************************
 */
@@ -31,14 +29,8 @@
 ENTRY(_start)
 
 /* Generate a link error if heap and stack don't fit into RAM */
-_Min_Heap_Size = 0x200;      /* required amount of heap  */
-_Min_Stack_Size = 0x400;     /* required amount of stack */
-
-/* Change if needed */
-/* JF TODO is this really needed? */
-STACK_SIZE = _Min_Stack_Size;
-HEAP_SIZE  = _Min_Heap_Size;
-
+_Min_Heap_Size = 0x200;  /* required amount of heap  */
+_Min_Stack_Size = 0x400; /* required amount of stack */
 
 /* Specify the memory areas */
 MEMORY
@@ -70,6 +62,8 @@ SECTIONS {
         *(.glue_7)         /* glue arm to thumb code */
         *(.glue_7t)        /* glue thumb to arm code */
         *(.eh_frame)
+        KEEP (*(.init))
+        KEEP (*(.fini))
         . = ALIGN(4);
         _etext = .;        /* define a global symbols at end of code */
     } >FLASH
@@ -94,6 +88,29 @@ SECTIONS {
         __exidx_end = .;
     } >FLASH
 
+    .preinit_array :
+    {
+        PROVIDE_HIDDEN (__preinit_array_start = .);
+        KEEP (*(.preinit_array*))
+        PROVIDE_HIDDEN (__preinit_array_end = .);
+    } >FLASH
+
+    .init_array :
+    {
+        PROVIDE_HIDDEN (__init_array_start = .);
+        KEEP (*(SORT(.init_array.*)))
+        KEEP (*(.init_array*))
+        PROVIDE_HIDDEN (__init_array_end = .);
+    } >FLASH
+
+    .fini_array :
+    {
+        PROVIDE_HIDDEN (__fini_array_start = .);
+        KEEP (*(SORT(.fini_array.*)))
+        KEEP (*(.fini_array*))
+        PROVIDE_HIDDEN (__fini_array_end = .);
+    } >FLASH
+
     /* used by the startup to initialize data */
     _sidata = LOADADDR(.data);
 
@@ -114,11 +131,13 @@ SECTIONS {
     {
         /* This is used by the startup in order to initialize the .bss secion */
         _sbss = .;         /* define a global symbol at bss start */
+        __bss_start__ = _sbss;
         *(.bss)
         *(.bss*)
         *(COMMON)
         . = ALIGN(4);
         _ebss = .;         /* define a global symbol at bss end */
+        __bss_end__ = _ebss;
     } >RAM
 
     /* User_heap_stack section, used to check that there is enough RAM left */
@@ -132,6 +151,7 @@ SECTIONS {
         . = ALIGN(4);
     } >RAM
 
+    /* JF: This section generates an error when using Zig */
     /* Remove information from the standard libraries */
 /*
     /DISCARD/ :
